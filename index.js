@@ -1,13 +1,35 @@
 const express = require('express');
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
+
 const app = express();
 
+// Cargar certificados SSL
+const options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/bdtest.allnutrition.cl/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/bdtest.allnutrition.cl/cert.pem'),
+  ca: fs.readFileSync('/etc/letsencrypt/live/bdtest.allnutrition.cl/chain.pem'),
+};
+
+// Configura tu app para manejar solicitudes
 app.get('/', (req, res) => {
-    res.send('Hola Mundo');
+  res.send('¡Hola Mundo desde HTTPS!');
 });
 
-app.listen(5000, () => {
-    console.log('Server running on http://0.0.0.0:5000');
+// Servidor HTTPS
+https.createServer(options, app).listen(443, () => {
+  console.log('Servidor HTTPS corriendo en https://bdtest.allnutrition.cl');
 });
+
+// Redirección de HTTP a HTTPS
+http.createServer((req, res) => {
+  res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+  res.end();
+}).listen(80, () => {
+  console.log('Redirección de HTTP a HTTPS activa en el puerto 80');
+});
+
 
 /*
 const sql = require('mssql');
