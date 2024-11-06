@@ -17,6 +17,7 @@ const dbConfig = {
 };
 
 // Conexión a la base de datos
+/*
 async function connectToDatabase() {
   try {
     await sql.connect(dbConfig);
@@ -27,6 +28,7 @@ async function connectToDatabase() {
 }
 
 connectToDatabase();
+*/
 
 // Ruta de ejemplo
 app.get('/', (req, res) => {
@@ -34,6 +36,7 @@ app.get('/', (req, res) => {
 });
 
 // Configura la ruta de la API para obtener los productos
+/*
 app.get('/api/productos', async (req, res) => {
   try {
     // Consulta a tu tabla
@@ -45,6 +48,7 @@ app.get('/api/productos', async (req, res) => {
     res.status(500).send('Error al obtener los productos');
   }
 });
+*/
 
 // Inicia el servidor
 app.listen(port, '0.0.0.0', () => {
