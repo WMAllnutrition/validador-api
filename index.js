@@ -1,3 +1,15 @@
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('Hola Mundo');
+});
+
+app.listen(5000, () => {
+    console.log('Server running on http://0.0.0.0:5000');
+});
+
+/*
 const sql = require('mssql');
 const express = require('express');
 const app = express();
@@ -17,7 +29,7 @@ const dbConfig = {
 };
 
 // Conexión a la base de datos
-/*
+
 async function connectToDatabase() {
   try {
     await sql.connect(dbConfig);
@@ -28,7 +40,7 @@ async function connectToDatabase() {
 }
 
 connectToDatabase();
-*/
+
 
 // Ruta de ejemplo
 app.get('/', (req, res) => {
@@ -36,7 +48,7 @@ app.get('/', (req, res) => {
 });
 
 // Configura la ruta de la API para obtener los productos
-/*
+
 app.get('/api/productos', async (req, res) => {
   try {
     // Consulta a tu tabla
@@ -48,9 +60,9 @@ app.get('/api/productos', async (req, res) => {
     res.status(500).send('Error al obtener los productos');
   }
 });
-*/
 
 // Inicia el servidor
 app.listen(port, '0.0.0.0', () => {
   console.log(`Servidor escuchando en http://3.85.130.50:${port}`);
 });
+*/
