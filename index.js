@@ -47,6 +47,6 @@ app.get('/api/productos', async (req, res) => {
 });
 
 // Inicia el servidor
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Servidor escuchando en http://3.85.130.50:${port}`);
 });
