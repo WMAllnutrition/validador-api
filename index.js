@@ -32,7 +32,7 @@ https.createServer(options, app).listen(8443, () => {
 http.createServer((req, res) => {
   res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
   res.end();
-}).listen(80, () => {
+}).listen(8080, () => {
   console.log('Redirección de HTTP a HTTPS activa en el puerto 80');
 });
 
