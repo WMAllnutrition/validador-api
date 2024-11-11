@@ -6,17 +6,19 @@ const fs = require('fs');
 const app = express();
 
 // Cargar certificados SSL
+/*
 const options = {
   key: fs.readFileSync('localhost-key.pem'),
   cert: fs.readFileSync('localhost-cert.pem'),
 };
-/*
-const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/bdtest.allnutrition.cl/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/bdtest.allnutrition.cl/cert.pem'),
-  ca: fs.readFileSync('/etc/letsencrypt/live/bdtest.allnutrition.cl/chain.pem'),
-};
 */
+
+const options = {
+  key: fs.readFileSync('/home/ubuntu/certificados/privkey.pem'),
+  cert: fs.readFileSync('/home/ubuntu/certificados/cert.pem'),
+  ca: fs.readFileSync('/home/ubuntu/certificados/chain.pem'),
+};
+
 
 // Configura tu app para manejar solicitudes
 app.get('/', (req, res) => {
