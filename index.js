@@ -6,10 +6,19 @@ const cors = require('cors'); // Importa cors
 
 const app = express();
 
-// Configurar CORS
+// Configurar CORS para múltiples dominios
+const allowedOrigins = ['https://bdtest.allnutrition.cl', 'https://allnutrition.cl'];
 app.use(cors({
-  origin: 'https://bdtest.allnutrition.cl', // Permitir solo este dominio
-  credentials: true // Habilitar envío de cookies u otros encabezados de autenticación, si es necesario
+  origin: function(origin, callback) {
+    // Permitir solicitudes sin 'Origin' (ej., desde herramientas locales como curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  credentials: true
 }));
 
 // Cargar certificados SSL
