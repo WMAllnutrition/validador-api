@@ -2,23 +2,22 @@ const express = require('express');
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
+const cors = require('cors'); // Importa cors
 
 const app = express();
 
-// Cargar certificados SSL
-/*
-const options = {
-  key: fs.readFileSync('localhost-key.pem'),
-  cert: fs.readFileSync('localhost-cert.pem'),
-};
-*/
+// Configurar CORS
+app.use(cors({
+  origin: 'https://bdtest.allnutrition.cl', // Permitir solo este dominio
+  credentials: true // Habilitar envío de cookies u otros encabezados de autenticación, si es necesario
+}));
 
+// Cargar certificados SSL
 const options = {
   key: fs.readFileSync('/home/ubuntu/certificados/privkey.pem'),
   cert: fs.readFileSync('/home/ubuntu/certificados/cert.pem'),
   ca: fs.readFileSync('/home/ubuntu/certificados/chain.pem'),
 };
-
 
 // Configura tu app para manejar solicitudes
 app.get('/', (req, res) => {
@@ -27,7 +26,7 @@ app.get('/', (req, res) => {
 
 // Servidor HTTPS
 https.createServer(options, app).listen(8443, () => {
-  console.log('Servidor HTTPS corriendo en https://bdtest.allnutrition.cl');
+  console.log('Servidor HTTPS corriendo en https://bdtest.allnutrition.cl:8443');
 });
 
 // Redirección de HTTP a HTTPS
@@ -35,9 +34,8 @@ http.createServer((req, res) => {
   res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
   res.end();
 }).listen(8080, () => {
-  console.log('Redirección de HTTP a HTTPS activa en el puerto 80');
+  console.log('Redirección de HTTP a HTTPS activa en el puerto 8080');
 });
-
 
 /*
 const sql = require('mssql');
