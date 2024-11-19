@@ -2,15 +2,15 @@ const express = require('express');
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
-const cors = require('cors'); // Importa cors
+const cors = require('cors');
+const sql = require('mssql');
 
 const app = express();
 
 // Configurar CORS para múltiples dominios
 const allowedOrigins = ['https://bdtest.allnutrition.cl', 'https://allnutrition.cl'];
 app.use(cors({
-  origin: function(origin, callback) {
-    // Permitir solicitudes sin 'Origin' (ej., desde herramientas locales como curl)
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -21,12 +21,31 @@ app.use(cors({
   credentials: true
 }));
 
-// Cargar certificados SSL
-const options = {
-  key: fs.readFileSync('/home/ubuntu/certificados/privkey.pem'),
-  cert: fs.readFileSync('/home/ubuntu/certificados/cert.pem'),
-  ca: fs.readFileSync('/home/ubuntu/certificados/chain.pem'),
+// Configuración de conexión a la base de datos
+const dbConfig = {
+  user: 'admin',
+  password: 'pj5CfH8DykqsqUsYvn4M',
+  server: 'database-1.czqacy0uy5uy.us-east-1.rds.amazonaws.com',
+  database: 'all_nutrition',
+  port: 1433,
+  options: {
+    encrypt: true,
+    trustServerCertificate: true
+  }
 };
+
+// Cargar certificados SSL
+const isDevelopment = process.env.NODE_ENV === 'dev';
+const options = isDevelopment
+  ? {
+    key: fs.readFileSync('./localhost-key.pem'), // Ruta a los certificados locales
+    cert: fs.readFileSync('./localhost-cert.pem'),
+  }
+  : {
+    key: fs.readFileSync('/home/ubuntu/certificados/privkey.pem'), // Ruta en producción
+    cert: fs.readFileSync('/home/ubuntu/certificados/cert.pem'),
+    ca: fs.readFileSync('/home/ubuntu/certificados/chain.pem'),
+  };
 
 // Configura tu app para manejar solicitudes
 app.get('/', (req, res) => {
@@ -38,6 +57,26 @@ https.createServer(options, app).listen(8443, () => {
   console.log('Servidor HTTPS corriendo en https://bdtest.allnutrition.cl:8443');
 });
 
+// Endpoint para consultar la base de datos
+app.get('/api/get-data', async (req, res) => {
+  try {
+    // Conectar a la base de datos
+    const pool = await sql.connect(dbConfig);
+
+    // Ejecutar una consulta (ajusta la consulta según tu esquema de tablas)
+    const result = await pool.request().query('SELECT TOP 10 * FROM dbo.test_table');
+
+    // Retornar los datos como JSON
+    res.json(result.recordset);
+
+    // Cerrar la conexión
+    await pool.close();
+  } catch (err) {
+    console.error('Error al consultar la base de datos:', err);
+    res.status(500).send('Error al consultar la base de datos');
+  }
+});
+
 // Redirección de HTTP a HTTPS
 http.createServer((req, res) => {
   res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
@@ -46,60 +85,3 @@ http.createServer((req, res) => {
   console.log('Redirección de HTTP a HTTPS activa en el puerto 8080');
 });
 
-/*
-const sql = require('mssql');
-const express = require('express');
-const app = express();
-const port = 3000;
-
-// Configura la conexión a tu base de datos de SQL Server en AWS RDS
-const dbConfig = {
-  user: 'admin',
-  password: 'pj5CfH8DykqsqUsYvn4M',
-  server: 'database-1.czqacy0uy5uy.us-east-1.rds.amazonaws.com',  // Endpoint de AWS RDS
-  database: 'NombreDeTuBaseDeDatos',  // Cambia esto al nombre de tu base de datos
-  port: 1433,
-  options: {
-    encrypt: true, // Asegura la conexión
-    trustServerCertificate: true // Solo si el certificado no es confiable
-  }
-};
-
-// Conexión a la base de datos
-
-async function connectToDatabase() {
-  try {
-    await sql.connect(dbConfig);
-    console.log("Conexión a la base de datos exitosa.");
-  } catch (err) {
-    console.error("Error al conectar a la base de datos:", err);
-  }
-}
-
-connectToDatabase();
-
-
-// Ruta de ejemplo
-app.get('/', (req, res) => {
-  res.send('¡Hola, mundo!');
-});
-
-// Configura la ruta de la API para obtener los productos
-
-app.get('/api/productos', async (req, res) => {
-  try {
-    // Consulta a tu tabla
-    const result = await sql.query`SELECT * FROM test_table`;
-
-    res.json(result.recordset);  // Devuelve los datos en JSON
-  } catch (error) {
-    console.error('Error al obtener los productos:', error);
-    res.status(500).send('Error al obtener los productos');
-  }
-});
-
-// Inicia el servidor
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Servidor escuchando en http://3.85.130.50:${port}`);
-});
-*/
