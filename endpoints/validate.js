@@ -16,11 +16,14 @@ router.get('/validate', async (req, res) => {
     const pool = await sql.connect(dbConfig);
 
     // Consulta para verificar si el código existe y su estado actual
+    const tableName = process.env.AWS_DB_TABLE;
     const query = `
       SELECT Codigo, Validado 
-      FROM dbo.test_table 
+      FROM ${tableName} 
       WHERE Codigo = @Codigo
     `;
+
+
     const result = await pool.request()
       .input('Codigo', sql.NVarChar, codigo)
       .query(query);

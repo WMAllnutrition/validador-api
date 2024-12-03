@@ -5,50 +5,65 @@ const ExcelJS = require('exceljs');
 
 const router = express.Router();
 
+function generateUniqueCodes(batchSize, existingCodes) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const codes = new Set();
+
+  while (codes.size < batchSize) {
+    let code = '';
+    for (let j = 0; j < 6; j++) {
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    if (!existingCodes.has(code)) {
+      codes.add(code);
+    }
+  }
+
+  return Array.from(codes);
+}
+
 router.post('/generate-codes', async (req, res) => {
-  const { batchSize } = req.body;
+  const { batchSize, marca } = req.body;
 
   if (!batchSize || batchSize <= 0) {
     return res.status(400).json({ error: 'El tamaño del lote debe ser mayor a 0.' });
+  }
+
+  if (!marca || marca.trim() === '') {
+    return res.status(400).json({ error: 'El campo "marca" es obligatorio.' });
   }
 
   try {
     const pool = await sql.connect(dbConfig);
 
     // Obtener códigos existentes
+    const tableName = process.env.AWS_DB_TABLE;
     const existingCodesResult = await pool.request().query(`
-      SELECT Codigo FROM dbo.test_table
+      SELECT Codigo FROM ${tableName}  WITH (NOLOCK)
     `);
     const existingCodes = new Set(existingCodesResult.recordset.map(row => row.Codigo));
 
-    // Generar códigos nuevos
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const generateCode = () => {
-      let code = '';
-      for (let i = 0; i < 6; i++) {
-        code += characters.charAt(Math.floor(Math.random() * characters.length));
+    const uniqueCodes = generateUniqueCodes(batchSize, existingCodes);
+
+    const batchInsert = async (codes, pool) => {
+      const batchSize = 1000; // Número de registros por lote
+      for (let i = 0; i < codes.length; i += batchSize) {
+        const batch = codes.slice(i, i + batchSize);
+        const table = new sql.Table(tableName);
+        table.create = true;
+        table.columns.add('Codigo', sql.Char(6), { nullable: false });
+        table.columns.add('Validado', sql.Bit, { nullable: false });
+        table.columns.add('Marca', sql.VarChar(255), { nullable: true });
+
+        batch.forEach(code => {
+          table.rows.add(code, 0, marca);
+        });
+
+        await pool.request().bulk(table);
       }
-      return code;
     };
 
-    const newCodes = new Set();
-    while (newCodes.size < batchSize) {
-      const code = generateCode();
-      if (!existingCodes.has(code)) {
-        newCodes.add(code);
-      }
-    }
-
-    // Insertar los nuevos códigos en la base de datos
-    const values = Array.from(newCodes)
-      .map(code => `('${code}', 0)`)
-      .join(',');
-
-    const insertQuery = `
-      INSERT INTO dbo.test_table (Codigo, Validado)
-      VALUES ${values}
-    `;
-    await pool.request().query(insertQuery);
+    await batchInsert(Array.from(uniqueCodes), pool);
 
     // Crear archivo Excel con los nuevos códigos
     const workbook = new ExcelJS.Workbook();
@@ -56,10 +71,11 @@ router.post('/generate-codes', async (req, res) => {
 
     worksheet.columns = [
       { header: 'Código', key: 'codigo', width: 20 },
+      { header: 'Marca', key: 'marca', width: 20 },
     ];
 
-    newCodes.forEach(code => {
-      worksheet.addRow({ codigo: code });
+    uniqueCodes.forEach(code => {
+      worksheet.addRow({ codigo: code, marca });
     });
 
     // Configurar la respuesta para enviar el archivo Excel
