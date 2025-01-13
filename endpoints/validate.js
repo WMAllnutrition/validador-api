@@ -57,8 +57,11 @@ router.get('/validate', async (req, res) => {
 
     // Insertar el correo en la tabla de correos
     const insertEmailQuery = `
-      INSERT INTO ${email_table} (email_address)
-      VALUES (@Correo)
+      IF NOT EXISTS (SELECT 1 FROM ${email_table} WHERE email_address = @Correo)
+      BEGIN
+        INSERT INTO ${email_table} (email_address)
+        VALUES (@Correo)
+      END
     `;
 
     await pool.request()
