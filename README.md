@@ -26,3 +26,8 @@ Ver lista de proceso:
 ```shell
 pm2 list
 ```
+
+Detener el proceso:
+```shell
+pm2 stop validador-api
+```
