@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/get-data', async (req, res) => {
   try {
     const pool = await sql.connect(dbConfig);
-    const tableName = process.env.AWS_DB_TABLE;
+    const tableName = process.env.AWS_VALIDATION_TABLE;
     const result = await pool.request().query(`SELECT TOP 10 * FROM ${tableName}`);
     res.json(result.recordset);
     await pool.close();

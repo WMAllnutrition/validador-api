@@ -37,7 +37,7 @@ router.post('/generate-codes', async (req, res) => {
     const pool = await sql.connect(dbConfig);
 
     // Obtener códigos existentes
-    const tableName = process.env.AWS_DB_TABLE;
+    const tableName = process.env.AWS_VALIDATION_TABLE;
     const existingCodesResult = await pool.request().query(`
       SELECT Codigo FROM ${tableName}  WITH (NOLOCK)
     `);

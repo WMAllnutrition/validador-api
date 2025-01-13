@@ -6,23 +6,24 @@ const router = express.Router();
 
 // Ruta para validar un código
 router.get('/validate', async (req, res) => {
-  const { codigo } = req.query;
+  const { codigo, correo } = req.query;
 
-  if (!codigo) {
-    return res.status(400).json({ error: 'El código es obligatorio.' });
+  if (!codigo || !correo) {
+    return res.status(400).json({ error: 'El código y el correo son obligatorios.' });
   }
 
   try {
     const pool = await sql.connect(dbConfig);
 
     // Consulta para verificar si el código existe y su estado actual
-    const tableName = process.env.AWS_DB_TABLE;
+    const validation_table = process.env.AWS_VALIDATION_TABLE;
+    const email_table = process.env.AWS_EMAIL_TABLE;
+
     const query = `
       SELECT Codigo, Validado 
-      FROM ${tableName} 
+      FROM ${validation_table} 
       WHERE Codigo = @Codigo
     `;
-
 
     const result = await pool.request()
       .input('Codigo', sql.NVarChar, codigo)
@@ -54,12 +55,22 @@ router.get('/validate', async (req, res) => {
       .input('Codigo', sql.NVarChar, codigo)
       .query(updateQuery);
 
+    // Insertar el correo en la tabla de correos
+    const insertEmailQuery = `
+      INSERT INTO ${email_table} (email_address)
+      VALUES (@Correo)
+    `;
+
+    await pool.request()
+      .input('Correo', sql.NVarChar, correo)
+      .query(insertEmailQuery);
+
     // Retornar los datos actualizados
     res.status(200).json({
       mensaje: 'El código ha sido validado con éxito.',
       codigo,
       validado: true,
-      primera_vez: true // Indica que es la primera vez que se valida
+      primera_vez: true,
     });
 
     await pool.close();

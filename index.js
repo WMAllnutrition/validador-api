@@ -12,6 +12,7 @@ app.use(express.json());
 
 
 // Configurar CORS
+// ALLOWED_ORIGINS="https://bdtest.allnutrition.cl,https://allnutrition.cl"
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
 app.use(cors({
   origin: (origin, callback) => {
@@ -38,4 +39,5 @@ http.createServer((req, res) => {
   res.end();
 }).listen(process.env.HTTP_PORT, () => {
   console.log(`Redirección de HTTP a HTTPS activa en el puerto ${process.env.HTTP_PORT}`);
+  console.log(`Conectado a tabla ${process.env.AWS_VALIDATION_TABLE}`);
 });
