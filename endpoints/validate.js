@@ -47,10 +47,11 @@ router.get('/validate', async (req, res) => {
 
     // Caso: Código no validado, actualizar a true
     const updateQuery = `
-      UPDATE dbo.test_table
+      UPDATE ${validation_table}
       SET Validado = 1
       WHERE Codigo = @Codigo
     `;
+
     await pool.request()
       .input('Codigo', sql.NVarChar, codigo)
       .query(updateQuery);
